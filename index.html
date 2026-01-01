@@ -39,22 +39,6 @@
             /* MUST be dot/2 */
         }
 
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg: #F5F7FA;
-                --panel: #FFFFFF;
-                --fg: #0B0E11;
-                --muted: rgba(11, 14, 17, .70);
-                --faint: rgba(11, 14, 17, .14);
-                --line: rgba(11, 14, 17, .10);
-
-                --fill: rgba(11, 14, 17, .06);
-                --stroke-future: rgba(11, 14, 17, .16);
-
-                --shadow: 0 12px 30px rgba(0, 0, 0, .12);
-            }
-        }
-
         * {
             box-sizing: border-box
         }
@@ -201,7 +185,7 @@
             filter: blur(var(--blur));
         }
 
-        /* GRID: dot size + gap (gap = dot/2) */
+        /* GRID: gap = dot/2 */
         .grid {
             display: grid;
             gap: var(--gridGap);
@@ -254,7 +238,7 @@
             transform: scale(.96);
         }
 
-        /* States (as requested) */
+        /* States */
         .future .dot {
             background: transparent;
             border-color: var(--stroke-future);
@@ -299,7 +283,7 @@
             border-color: transparent;
         }
 
-        /* Footer stats under grid */
+        /* Footer stats */
         .stats {
             flex: 0 0 auto;
             display: flex;
@@ -316,14 +300,14 @@
             opacity: .35;
         }
 
-        /* Week detail inside card */
+        /* Week detail */
         .weekDetail {
             width: 100%;
             max-width: 520px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             padding: 8px 6px;
         }
 
@@ -349,56 +333,6 @@
             align-content: center;
         }
 
-        .tooltip {
-            width: 100%;
-            border-radius: 16px;
-            border: 1px solid color-mix(in srgb, var(--faint) 70%, transparent);
-            background: color-mix(in srgb, var(--panel) 90%, transparent);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            padding: 10px 12px;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
-            display: none;
-            gap: 8px;
-        }
-
-        .tooltip.show {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tooltip .date {
-            font-weight: 800;
-            font-size: 12px;
-            color: color-mix(in srgb, var(--fg) 88%, transparent);
-        }
-
-        .tooltip .noteTxt {
-            font-weight: 600;
-            font-size: 12px;
-            color: color-mix(in srgb, var(--muted) 92%, transparent);
-            line-height: 1.25;
-            min-height: 16px;
-        }
-
-        .miniBtn {
-            align-self: flex-end;
-            appearance: none;
-            border: 1px solid color-mix(in srgb, var(--faint) 75%, transparent);
-            background: transparent;
-            color: color-mix(in srgb, var(--fg) 88%, transparent);
-            border-radius: 999px;
-            padding: 8px 10px;
-            font-weight: 800;
-            font-size: 12px;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-
-        .miniBtn:active {
-            transform: scale(.98);
-        }
-
         .backBtn {
             align-self: flex-start;
             appearance: none;
@@ -411,10 +345,6 @@
             font-size: 12px;
             cursor: pointer;
             touch-action: manipulation;
-        }
-
-        .backBtn:active {
-            transform: scale(.98);
         }
 
         /* Sheet */
@@ -540,10 +470,6 @@
             letter-spacing: .1px;
         }
 
-        input[type="text"]::placeholder {
-            color: color-mix(in srgb, var(--muted) 85%, transparent);
-        }
-
         .saveBtn {
             appearance: none;
             border: 0;
@@ -558,11 +484,6 @@
             touch-action: manipulation;
             white-space: nowrap;
             font-family: inherit;
-        }
-
-        .saveBtn:active {
-            transform: scale(.98);
-            filter: brightness(.96);
         }
 
         .counter {
@@ -582,7 +503,6 @@
             .dotBtn:active .dot,
             .switch:active,
             .saveBtn:active,
-            .miniBtn:active,
             .backBtn:active {
                 transform: none;
             }
@@ -604,23 +524,19 @@
 
         <div class="divider" aria-hidden="true"></div>
 
-        <div class="card" id="card">
+        <div class="card">
             <div class="pane">
-                <!-- Weeks layer -->
                 <div class="paneLayer" id="weeksLayer">
                     <div class="grid weeks" id="weeksGrid"></div>
                 </div>
 
-                <!-- Days layer -->
                 <div class="paneLayer hidden" id="daysLayer">
                     <div class="grid days" id="daysGrid"></div>
                 </div>
 
-                <!-- Week detail layer -->
                 <div class="paneLayer hidden" id="weekDetailLayer">
                     <div class="weekDetail">
                         <button class="backBtn" id="weekBack" type="button">← Volver</button>
-
                         <div class="weekDaysHeader" aria-hidden="true">
                             <div>L</div>
                             <div>M</div>
@@ -630,19 +546,12 @@
                             <div>S</div>
                             <div>D</div>
                         </div>
-
                         <div class="weekDaysRow" id="weekDaysRow"></div>
-
-                        <div class="tooltip" id="tooltip">
-                            <div class="date" id="tipDate">—</div>
-                            <div class="noteTxt" id="tipNote">—</div>
-                            <button class="miniBtn" id="tipAdd" type="button">Añadir nota</button>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="stats" id="stats">
+            <div class="stats">
                 <span id="daysLeft">—</span>
                 <span class="sep">·</span>
                 <span id="progress">—</span>
@@ -650,10 +559,10 @@
         </div>
     </div>
 
-    <!-- Note sheet -->
+    <!-- Note sheet (single, used everywhere) -->
     <div class="overlay" id="overlay"></div>
     <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Nota del día">
-        <div class="sheetCard">
+        <div class="sheetCard" id="sheetCard">
             <div class="grabber" aria-hidden="true"></div>
             <div class="sheetHead">
                 <div class="meta">
@@ -675,7 +584,6 @@
     <script>
         const el = (id) => document.getElementById(id);
         const pad2 = (n) => String(n).padStart(2, "0");
-
         function startOfDay(d) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setHours(0, 0, 0, 0); return x; }
         function isSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
         function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
@@ -707,9 +615,6 @@
             const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
             return `${pad2(dateObj.getDate())} de ${months[dateObj.getMonth()]} de ${dateObj.getFullYear()}`;
         }
-        function shortDateES(dateObj) {
-            return `${pad2(dateObj.getDate())}/${pad2(dateObj.getMonth() + 1)}/${dateObj.getFullYear()}`;
-        }
 
         // Notes storage
         const storageKey = (d) => `note:${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -736,16 +641,12 @@
         const weekDaysRow = el("weekDaysRow");
         const weekBack = el("weekBack");
 
-        const tooltip = el("tooltip");
-        const tipDate = el("tipDate");
-        const tipNote = el("tipNote");
-        const tipAdd = el("tipAdd");
-
         const daysLeftEl = el("daysLeft");
         const progressEl = el("progress");
 
         const overlay = el("overlay");
         const sheet = el("sheet");
+        const sheetCard = el("sheetCard");
         const closeSheet = el("closeSheet");
         const noteInput = el("noteInput");
         const saveNote = el("saveNote");
@@ -764,7 +665,13 @@
         let mode = "weeks";
         let selectedDay = null;
         let weekSelectedStart = null;
-        let tooltipDay = null;
+
+        // click-to-close behaviour
+        let lastDayTapKey = null; // "YYYY-MM-DD"
+
+        function dayKey(d) {
+            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+        }
 
         // State classes
         function stateForDate(d, isCurrent = false) {
@@ -805,14 +712,12 @@
 
         function renderWeeksGrid() {
             weeksGrid.innerHTML = "";
-            const slots = 56; // 4x14 fixed
+            const slots = 56; // 4x14
             for (let w = 1; w <= slots; w++) {
                 if (w <= totalWeeks) {
                     const start = isoWeekStartFromWeek(isoYear, w);
                     const cls = stateForWeek(start, w === isoNow.week);
-                    weeksGrid.appendChild(
-                        makeCell(cls, () => openWeekDetail(start))
-                    );
+                    weeksGrid.appendChild(makeCell(cls, () => openWeekDetail(start)));
                 } else {
                     weeksGrid.appendChild(makeCell("", null, true));
                 }
@@ -821,7 +726,7 @@
 
         function renderDaysGrid() {
             daysGrid.innerHTML = "";
-            const slots = 378; // 14x27 fixed
+            const slots = 378; // 14x27
             for (let i = 0; i < slots; i++) {
                 const d = addDays(isoYearStart, i);
                 if (d > isoYearEnd) {
@@ -829,16 +734,16 @@
                     continue;
                 }
                 const cls = stateForDate(d, isSameDay(d, now));
-                daysGrid.appendChild(makeCell(cls, () => openDaySheet(d)));
+                // uses the SAME sheet
+                daysGrid.appendChild(makeCell(cls, () => onDayTap(d)));
             }
         }
 
-        // Stats under grid
+        // Stats
         function updateStats() {
             const totalDays = Math.round((startOfDay(isoYearEnd) - startOfDay(isoYearStart)) / 86400000) + 1;
             const elapsedDays = Math.max(0, Math.round((startOfDay(now) - startOfDay(isoYearStart)) / 86400000) + 1);
             const leftDays = Math.max(0, totalDays - elapsedDays);
-
             const pct = Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100));
             daysLeftEl.textContent = `${leftDays} días restantes`;
             progressEl.textContent = `${pct.toFixed(0)}%`;
@@ -847,29 +752,28 @@
         // Week detail view
         function openWeekDetail(weekStart) {
             weekSelectedStart = weekStart;
-            tooltip.classList.remove("show");
-            tooltipDay = null;
+
+            // Ensure sheet is closed when entering week detail
+            closeSheetUI(true);
 
             weekDaysRow.innerHTML = "";
             for (let i = 0; i < 7; i++) {
                 const d = addDays(weekStart, i);
                 const cls = stateForDate(d, isSameDay(d, now));
-                weekDaysRow.appendChild(
-                    makeCell(cls, () => showTooltipForDay(d))
-                );
+                weekDaysRow.appendChild(makeCell(cls, () => onDayTap(d)));
             }
 
             weeksLayer.classList.add("hidden");
             daysLayer.classList.add("hidden");
             weekDetailLayer.classList.remove("hidden");
-            requestAnimationFrame(recomputeSizing); // ensure dot/gap fits 7 row too
+            requestAnimationFrame(recomputeSizing);
         }
 
         function closeWeekDetail() {
             weekDetailLayer.classList.add("hidden");
-            tooltip.classList.remove("show");
-            tooltipDay = null;
+            weekSelectedStart = null;
 
+            // Show main view for current mode
             if (mode === "days") {
                 daysLayer.classList.remove("hidden");
                 weeksLayer.classList.add("hidden");
@@ -880,23 +784,32 @@
             requestAnimationFrame(recomputeSizing);
         }
 
-        weekBack.addEventListener("click", closeWeekDetail);
-
-        function showTooltipForDay(d) {
-            tooltipDay = d;
-            const note = getNote(d).trim();
-            tipDate.textContent = longDateES(d);
-            tipNote.textContent = note.length ? note : "Sin nota";
-            tipAdd.textContent = note.length ? "Editar nota" : "Añadir nota";
-            tooltip.classList.add("show");
-        }
-
-        tipAdd.addEventListener("click", () => {
-            if (!tooltipDay) return;
-            openDaySheet(tooltipDay);
+        weekBack.addEventListener("click", () => {
+            closeSheetUI(true);
+            closeWeekDetail();
         });
 
-        // Sheet
+        // ====== Day tap behaviour (toggle sheet on same day) ======
+        function onDayTap(d) {
+            const k = dayKey(d);
+
+            // If sheet is open and tapping same day => close
+            if (isSheetOpen() && lastDayTapKey === k) {
+                closeSheetUI(true);
+                lastDayTapKey = null;
+                return;
+            }
+
+            // Otherwise open for that day
+            lastDayTapKey = k;
+            openDaySheet(d);
+        }
+
+        function isSheetOpen() {
+            return sheet.classList.contains("show");
+        }
+
+        // Sheet open/close (single used everywhere)
         function openDaySheet(d) {
             selectedDay = d;
             sheetSub.textContent = longDateES(d);
@@ -908,25 +821,25 @@
             setTimeout(() => noteInput.focus({ preventScroll: true }), 60);
         }
 
-        function closeSheetUI() {
+        function closeSheetUI(silent = false) {
             overlay.classList.remove("show");
             sheet.classList.remove("show");
             selectedDay = null;
+            if (!silent) lastDayTapKey = null;
         }
 
         function saveCurrent() {
             if (!selectedDay) return;
             setNote(selectedDay, noteInput.value);
 
-            // refresh dots/halos everywhere
+            // refresh visuals
             renderDaysGrid();
             renderWeeksGrid();
             if (weekSelectedStart && !weekDetailLayer.classList.contains("hidden")) {
-                openWeekDetail(weekSelectedStart); // rerender week row + keep view
-                if (tooltipDay) showTooltipForDay(tooltipDay);
+                openWeekDetail(weekSelectedStart); // rerender week row while staying there
             }
             updateStats();
-            closeSheetUI();
+            closeSheetUI(true);
         }
 
         noteInput.addEventListener("input", () => {
@@ -935,24 +848,36 @@
         });
 
         saveNote.addEventListener("click", saveCurrent);
-        closeSheet.addEventListener("click", closeSheetUI);
-        overlay.addEventListener("click", closeSheetUI);
+        closeSheet.addEventListener("click", () => closeSheetUI(true));
+
+        // Overlay click closes sheet (your requirement)
+        overlay.addEventListener("click", () => {
+            closeSheetUI(true);
+            lastDayTapKey = null;
+        });
+
+        // Prevent clicks inside sheet from closing (safety)
+        sheetCard.addEventListener("click", (e) => e.stopPropagation());
+        sheet.addEventListener("click", (e) => e.stopPropagation());
 
         noteInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") { e.preventDefault(); saveCurrent(); }
-            if (e.key === "Escape") { e.preventDefault(); closeSheetUI(); }
+            if (e.key === "Escape") { e.preventDefault(); closeSheetUI(true); lastDayTapKey = null; }
         });
 
-        // Toggle views
+        // Switch behaviour: ALWAYS return to main screens
         function setMode(next) {
             mode = next;
             const isDays = mode === "days";
             toggle.classList.toggle("on", isDays);
 
-            // If week detail is open, don't override
+            // Close any secondary layers & sheet
+            closeSheetUI(true);
+            lastDayTapKey = null;
+
             if (!weekDetailLayer.classList.contains("hidden")) {
-                requestAnimationFrame(recomputeSizing);
-                return;
+                weekDetailLayer.classList.add("hidden");
+                weekSelectedStart = null;
             }
 
             if (isDays) {
@@ -962,22 +887,19 @@
                 daysLayer.classList.add("hidden");
                 weeksLayer.classList.remove("hidden");
             }
+
             requestAnimationFrame(recomputeSizing);
         }
 
         toggle.addEventListener("click", () => setMode(mode === "weeks" ? "days" : "weeks"));
 
-        // ====== SIZING RULE: gap = dot/2 ALWAYS ======
-        // totalW = cols*dot + (cols-1)*(dot/2) = dot*( (3*cols - 1)/2 )
-        // => dot <= 2*availW / (3*cols - 1)
+        // ====== SIZING: gap = dot/2 ALWAYS ======
         function recomputeSizing() {
-            const isWeekDetail = !weekDetailLayer.classList.contains("hidden");
             let cols, rows, layer;
 
-            if (isWeekDetail) {
-                // week detail row is 7x1 but it sits with header+tooltip; dot should be based on width mostly
+            if (!weekDetailLayer.classList.contains("hidden")) {
                 cols = 7;
-                rows = 10; // "virtual" to not oversize; keeps it comfortable in portrait
+                rows = 14; // comfortable sizing in week view
                 layer = weekDetailLayer;
             } else {
                 const isDays = !daysLayer.classList.contains("hidden");
@@ -992,17 +914,17 @@
 
             const dotByW = Math.floor((2 * availW) / (3 * cols - 1));
             const dotByH = Math.floor((2 * availH) / (3 * rows - 1));
-            let dot = Math.max(6, Math.min(dotByW, dotByH)); // clamp minimal
+            let dot = Math.max(6, Math.min(dotByW, dotByH));
 
-            // Keep dots a bit larger in week detail (feels nicer)
-            if (isWeekDetail) dot = Math.min(dot, 28);
+            // keep week day row nicer
+            if (!weekDetailLayer.classList.contains("hidden")) dot = Math.min(dot, 26);
 
-            const gap = dot / 2; // can be .5 px, that's okay
+            const gap = dot / 2;
 
             root.style.setProperty("--dot", dot + "px");
             root.style.setProperty("--gridGap", gap + "px");
 
-            // switch <= dot (height)
+            // Switch <= dot
             const h = Math.max(14, Math.min(dot, 26));
             const w = Math.round(h * 1.9);
             toggle.style.height = `${h}px`;
