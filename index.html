@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>ISO · Weeks / Days</title>
+    <title>ISO · Semanas / Días</title>
     <meta name="theme-color" content="#0b0e11" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,6 @@
             --bg: #0B0E11;
             --panel: #10151C;
             --fg: #FFFFFF;
-
             --muted: rgba(255, 255, 255, .70);
             --faint: rgba(255, 255, 255, .14);
             --line: rgba(255, 255, 255, .10);
@@ -33,9 +32,11 @@
             --dur: 280ms;
             --blur: 10px;
 
-            /* computed (dynamic) */
-            --gridGap: 6px;
-            --dot: 18px;
+            /* computed */
+            --dot: 14px;
+            /* circle diameter */
+            --gridGap: 7px;
+            /* MUST be dot/2 */
         }
 
         @media (prefers-color-scheme: light) {
@@ -43,7 +44,6 @@
                 --bg: #F5F7FA;
                 --panel: #FFFFFF;
                 --fg: #0B0E11;
-
                 --muted: rgba(11, 14, 17, .70);
                 --faint: rgba(11, 14, 17, .14);
                 --line: rgba(11, 14, 17, .10);
@@ -66,7 +66,7 @@
 
         body {
             margin: 0;
-            font-family: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+            font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
             background:
                 radial-gradient(1200px 600px at 15% -10%, rgba(0, 255, 156, .14), transparent 55%),
                 radial-gradient(1000px 600px at 110% 10%, rgba(0, 201, 122, .10), transparent 55%),
@@ -128,8 +128,8 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             transition: transform 140ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease);
-            width: 44px;
-            height: 24px;
+            width: 40px;
+            height: 22px;
         }
 
         .switch:active {
@@ -140,8 +140,8 @@
             position: absolute;
             top: 3px;
             left: 3px;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border-radius: var(--r);
             background: color-mix(in srgb, var(--fg) 92%, transparent);
             box-shadow: 0 6px 16px rgba(0, 0, 0, .28);
@@ -173,26 +173,35 @@
             -webkit-backdrop-filter: blur(14px);
             overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .pane {
+            flex: 1 1 auto;
+            min-height: 0;
+            position: relative;
+        }
+
+        .paneLayer {
             position: absolute;
-            inset: 12px;
-            transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), filter var(--dur) var(--ease);
-            will-change: transform, opacity, filter;
+            inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), filter var(--dur) var(--ease);
+            will-change: transform, opacity, filter;
         }
 
-        .pane.hidden {
+        .hidden {
             opacity: 0;
             pointer-events: none;
             transform: translateY(10px) scale(.99);
             filter: blur(var(--blur));
         }
 
-        /* GRID fills pane: dot and gap are dynamic */
+        /* GRID: dot size + gap (gap = dot/2) */
         .grid {
             display: grid;
             gap: var(--gridGap);
@@ -245,7 +254,7 @@
             transform: scale(.96);
         }
 
-        /* States */
+        /* States (as requested) */
         .future .dot {
             background: transparent;
             border-color: var(--stroke-future);
@@ -288,6 +297,124 @@
         .empty .dot {
             opacity: 0;
             border-color: transparent;
+        }
+
+        /* Footer stats under grid */
+        .stats {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: color-mix(in srgb, var(--muted) 85%, transparent);
+            letter-spacing: .1px;
+            padding-bottom: 2px;
+        }
+
+        .stats .sep {
+            opacity: .35;
+        }
+
+        /* Week detail inside card */
+        .weekDetail {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 6px;
+        }
+
+        .weekDaysHeader {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: var(--gridGap);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .2px;
+            color: color-mix(in srgb, var(--muted) 85%, transparent);
+            text-align: center;
+            user-select: none;
+        }
+
+        .weekDaysRow {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(7, var(--dot));
+            gap: var(--gridGap);
+            justify-content: center;
+            align-content: center;
+        }
+
+        .tooltip {
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid color-mix(in srgb, var(--faint) 70%, transparent);
+            background: color-mix(in srgb, var(--panel) 90%, transparent);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 10px 12px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
+            display: none;
+            gap: 8px;
+        }
+
+        .tooltip.show {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tooltip .date {
+            font-weight: 800;
+            font-size: 12px;
+            color: color-mix(in srgb, var(--fg) 88%, transparent);
+        }
+
+        .tooltip .noteTxt {
+            font-weight: 600;
+            font-size: 12px;
+            color: color-mix(in srgb, var(--muted) 92%, transparent);
+            line-height: 1.25;
+            min-height: 16px;
+        }
+
+        .miniBtn {
+            align-self: flex-end;
+            appearance: none;
+            border: 1px solid color-mix(in srgb, var(--faint) 75%, transparent);
+            background: transparent;
+            color: color-mix(in srgb, var(--fg) 88%, transparent);
+            border-radius: 999px;
+            padding: 8px 10px;
+            font-weight: 800;
+            font-size: 12px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .miniBtn:active {
+            transform: scale(.98);
+        }
+
+        .backBtn {
+            align-self: flex-start;
+            appearance: none;
+            border: 1px solid color-mix(in srgb, var(--faint) 75%, transparent);
+            background: transparent;
+            color: color-mix(in srgb, var(--fg) 88%, transparent);
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-weight: 900;
+            font-size: 12px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .backBtn:active {
+            transform: scale(.98);
         }
 
         /* Sheet */
@@ -429,7 +556,6 @@
             background: linear-gradient(135deg, var(--green), var(--green2));
             cursor: pointer;
             touch-action: manipulation;
-            transition: transform 140ms var(--ease), filter 140ms var(--ease);
             white-space: nowrap;
             font-family: inherit;
         }
@@ -445,6 +571,21 @@
             color: var(--muted);
             padding-right: 2px;
             font-weight: 600;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            :root {
+                --dur: 0ms;
+                --blur: 0px;
+            }
+
+            .dotBtn:active .dot,
+            .switch:active,
+            .saveBtn:active,
+            .miniBtn:active,
+            .backBtn:active {
+                transform: none;
+            }
         }
     </style>
 </head>
@@ -463,13 +604,48 @@
 
         <div class="divider" aria-hidden="true"></div>
 
-        <div class="card">
-            <div class="pane" id="weeksPane">
-                <div class="grid weeks" id="weeksGrid"></div>
+        <div class="card" id="card">
+            <div class="pane">
+                <!-- Weeks layer -->
+                <div class="paneLayer" id="weeksLayer">
+                    <div class="grid weeks" id="weeksGrid"></div>
+                </div>
+
+                <!-- Days layer -->
+                <div class="paneLayer hidden" id="daysLayer">
+                    <div class="grid days" id="daysGrid"></div>
+                </div>
+
+                <!-- Week detail layer -->
+                <div class="paneLayer hidden" id="weekDetailLayer">
+                    <div class="weekDetail">
+                        <button class="backBtn" id="weekBack" type="button">← Volver</button>
+
+                        <div class="weekDaysHeader" aria-hidden="true">
+                            <div>L</div>
+                            <div>M</div>
+                            <div>X</div>
+                            <div>J</div>
+                            <div>V</div>
+                            <div>S</div>
+                            <div>D</div>
+                        </div>
+
+                        <div class="weekDaysRow" id="weekDaysRow"></div>
+
+                        <div class="tooltip" id="tooltip">
+                            <div class="date" id="tipDate">—</div>
+                            <div class="noteTxt" id="tipNote">—</div>
+                            <button class="miniBtn" id="tipAdd" type="button">Añadir nota</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="pane hidden" id="daysPane">
-                <div class="grid days" id="daysGrid"></div>
+            <div class="stats" id="stats">
+                <span id="daysLeft">—</span>
+                <span class="sep">·</span>
+                <span id="progress">—</span>
             </div>
         </div>
     </div>
@@ -499,10 +675,12 @@
     <script>
         const el = (id) => document.getElementById(id);
         const pad2 = (n) => String(n).padStart(2, "0");
+
         function startOfDay(d) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setHours(0, 0, 0, 0); return x; }
         function isSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
         function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 
+        // ISO helpers
         function isoWeekNumber(date) {
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
             const dayNum = d.getUTCDay() || 7;
@@ -524,11 +702,16 @@
             start.setHours(0, 0, 0, 0);
             return start;
         }
+
         function longDateES(dateObj) {
             const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
             return `${pad2(dateObj.getDate())} de ${months[dateObj.getMonth()]} de ${dateObj.getFullYear()}`;
         }
+        function shortDateES(dateObj) {
+            return `${pad2(dateObj.getDate())}/${pad2(dateObj.getMonth() + 1)}/${dateObj.getFullYear()}`;
+        }
 
+        // Notes storage
         const storageKey = (d) => `note:${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
         const getNote = (d) => localStorage.getItem(storageKey(d)) || "";
         const setNote = (d, text) => {
@@ -538,13 +721,28 @@
             else localStorage.setItem(k, t);
         };
 
+        // Elements
+        const root = document.documentElement;
         const dateLongEl = el("dateLong");
         const toggle = el("toggle");
         const knob = toggle.querySelector(".knob");
-        const weeksPane = el("weeksPane");
-        const daysPane = el("daysPane");
+
+        const weeksLayer = el("weeksLayer");
+        const daysLayer = el("daysLayer");
+        const weekDetailLayer = el("weekDetailLayer");
+
         const weeksGrid = el("weeksGrid");
         const daysGrid = el("daysGrid");
+        const weekDaysRow = el("weekDaysRow");
+        const weekBack = el("weekBack");
+
+        const tooltip = el("tooltip");
+        const tipDate = el("tipDate");
+        const tipNote = el("tipNote");
+        const tipAdd = el("tipAdd");
+
+        const daysLeftEl = el("daysLeft");
+        const progressEl = el("progress");
 
         const overlay = el("overlay");
         const sheet = el("sheet");
@@ -554,6 +752,7 @@
         const counter = el("counter");
         const sheetSub = el("sheetSub");
 
+        // State
         const now = new Date(); now.setSeconds(0, 0);
         const isoNow = isoWeekNumber(now);
         const isoYear = isoNow.year;
@@ -564,25 +763,10 @@
 
         let mode = "weeks";
         let selectedDay = null;
+        let weekSelectedStart = null;
+        let tooltipDay = null;
 
-        function makeCell(stateClass, onClick, empty = false) {
-            const cell = document.createElement("div");
-            cell.className = "cell";
-
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "dotBtn " + (empty ? "empty" : stateClass);
-
-            const dot = document.createElement("div");
-            dot.className = "dot";
-
-            btn.appendChild(dot);
-            if (onClick && !empty) btn.addEventListener("click", onClick);
-
-            cell.appendChild(btn);
-            return cell;
-        }
-
+        // State classes
         function stateForDate(d, isCurrent = false) {
             const future = d > now;
             const past = d < startOfDay(now);
@@ -605,14 +789,30 @@
             return cls;
         }
 
+        function makeCell(stateClass, onClick, empty = false) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "dotBtn " + (empty ? "empty" : stateClass);
+            const dot = document.createElement("div");
+            dot.className = "dot";
+            btn.appendChild(dot);
+            if (onClick && !empty) btn.addEventListener("click", onClick);
+            cell.appendChild(btn);
+            return cell;
+        }
+
         function renderWeeksGrid() {
             weeksGrid.innerHTML = "";
-            const slots = 56; // 4x14
+            const slots = 56; // 4x14 fixed
             for (let w = 1; w <= slots; w++) {
                 if (w <= totalWeeks) {
                     const start = isoWeekStartFromWeek(isoYear, w);
                     const cls = stateForWeek(start, w === isoNow.week);
-                    weeksGrid.appendChild(makeCell(cls, () => openDaySheet(start)));
+                    weeksGrid.appendChild(
+                        makeCell(cls, () => openWeekDetail(start))
+                    );
                 } else {
                     weeksGrid.appendChild(makeCell("", null, true));
                 }
@@ -621,7 +821,7 @@
 
         function renderDaysGrid() {
             daysGrid.innerHTML = "";
-            const slots = 378; // 14x27
+            const slots = 378; // 14x27 fixed
             for (let i = 0; i < slots; i++) {
                 const d = addDays(isoYearStart, i);
                 if (d > isoYearEnd) {
@@ -633,15 +833,79 @@
             }
         }
 
+        // Stats under grid
+        function updateStats() {
+            const totalDays = Math.round((startOfDay(isoYearEnd) - startOfDay(isoYearStart)) / 86400000) + 1;
+            const elapsedDays = Math.max(0, Math.round((startOfDay(now) - startOfDay(isoYearStart)) / 86400000) + 1);
+            const leftDays = Math.max(0, totalDays - elapsedDays);
+
+            const pct = Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100));
+            daysLeftEl.textContent = `${leftDays} días restantes`;
+            progressEl.textContent = `${pct.toFixed(0)}%`;
+        }
+
+        // Week detail view
+        function openWeekDetail(weekStart) {
+            weekSelectedStart = weekStart;
+            tooltip.classList.remove("show");
+            tooltipDay = null;
+
+            weekDaysRow.innerHTML = "";
+            for (let i = 0; i < 7; i++) {
+                const d = addDays(weekStart, i);
+                const cls = stateForDate(d, isSameDay(d, now));
+                weekDaysRow.appendChild(
+                    makeCell(cls, () => showTooltipForDay(d))
+                );
+            }
+
+            weeksLayer.classList.add("hidden");
+            daysLayer.classList.add("hidden");
+            weekDetailLayer.classList.remove("hidden");
+            requestAnimationFrame(recomputeSizing); // ensure dot/gap fits 7 row too
+        }
+
+        function closeWeekDetail() {
+            weekDetailLayer.classList.add("hidden");
+            tooltip.classList.remove("show");
+            tooltipDay = null;
+
+            if (mode === "days") {
+                daysLayer.classList.remove("hidden");
+                weeksLayer.classList.add("hidden");
+            } else {
+                weeksLayer.classList.remove("hidden");
+                daysLayer.classList.add("hidden");
+            }
+            requestAnimationFrame(recomputeSizing);
+        }
+
+        weekBack.addEventListener("click", closeWeekDetail);
+
+        function showTooltipForDay(d) {
+            tooltipDay = d;
+            const note = getNote(d).trim();
+            tipDate.textContent = longDateES(d);
+            tipNote.textContent = note.length ? note : "Sin nota";
+            tipAdd.textContent = note.length ? "Editar nota" : "Añadir nota";
+            tooltip.classList.add("show");
+        }
+
+        tipAdd.addEventListener("click", () => {
+            if (!tooltipDay) return;
+            openDaySheet(tooltipDay);
+        });
+
+        // Sheet
         function openDaySheet(d) {
             selectedDay = d;
             sheetSub.textContent = longDateES(d);
             noteInput.value = getNote(d);
             counter.textContent = `${noteInput.value.length}/50`;
+
             overlay.classList.add("show");
             sheet.classList.add("show");
-            setTimeout(() => noteInput.focus({ preventScroll: true }), 80);
-            attachSwipeToClose();
+            setTimeout(() => noteInput.focus({ preventScroll: true }), 60);
         }
 
         function closeSheetUI() {
@@ -653,8 +917,15 @@
         function saveCurrent() {
             if (!selectedDay) return;
             setNote(selectedDay, noteInput.value);
+
+            // refresh dots/halos everywhere
             renderDaysGrid();
             renderWeeksGrid();
+            if (weekSelectedStart && !weekDetailLayer.classList.contains("hidden")) {
+                openWeekDetail(weekSelectedStart); // rerender week row + keep view
+                if (tooltipDay) showTooltipForDay(tooltipDay);
+            }
+            updateStats();
             closeSheetUI();
         }
 
@@ -667,106 +938,72 @@
         closeSheet.addEventListener("click", closeSheetUI);
         overlay.addEventListener("click", closeSheetUI);
 
-        // swipe down close
-        let swipeBound = false;
-        function attachSwipeToClose() {
-            if (swipeBound) return;
-            swipeBound = true;
+        noteInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); saveCurrent(); }
+            if (e.key === "Escape") { e.preventDefault(); closeSheetUI(); }
+        });
 
-            let startY = 0, currentY = 0, dragging = false;
-            const onDown = (e) => {
-                if (!sheet.classList.contains("show")) return;
-                dragging = true;
-                startY = (e.touches ? e.touches[0].clientY : e.clientY);
-                currentY = startY;
-            };
-            const onMove = (e) => {
-                if (!dragging) return;
-                currentY = (e.touches ? e.touches[0].clientY : e.clientY);
-                const dy = Math.max(0, currentY - startY);
-                sheet.style.transform = `translateY(${dy}px)`;
-                sheet.style.opacity = String(Math.max(0.6, 1 - dy / 260));
-                sheet.style.filter = `blur(${Math.min(14, dy / 30)}px)`;
-            };
-            const onUp = () => {
-                if (!dragging) return;
-                dragging = false;
-                const dy = Math.max(0, currentY - startY);
-                sheet.style.transform = "";
-                sheet.style.opacity = "";
-                sheet.style.filter = "";
-                if (dy > 90) closeSheetUI();
-            };
-
-            sheet.addEventListener("touchstart", onDown, { passive: true });
-            sheet.addEventListener("touchmove", onMove, { passive: true });
-            sheet.addEventListener("touchend", onUp, { passive: true });
-        }
-
+        // Toggle views
         function setMode(next) {
             mode = next;
             const isDays = mode === "days";
             toggle.classList.toggle("on", isDays);
 
-            if (isDays) {
-                weeksPane.classList.add("hidden");
-                daysPane.classList.remove("hidden");
-            } else {
-                daysPane.classList.add("hidden");
-                weeksPane.classList.remove("hidden");
+            // If week detail is open, don't override
+            if (!weekDetailLayer.classList.contains("hidden")) {
+                requestAnimationFrame(recomputeSizing);
+                return;
             }
-            requestAnimationFrame(recomputeFillSizing);
+
+            if (isDays) {
+                weeksLayer.classList.add("hidden");
+                daysLayer.classList.remove("hidden");
+            } else {
+                daysLayer.classList.add("hidden");
+                weeksLayer.classList.remove("hidden");
+            }
+            requestAnimationFrame(recomputeSizing);
         }
 
         toggle.addEventListener("click", () => setMode(mode === "weeks" ? "days" : "weeks"));
 
-        // ====== Fill sizing: always occupy the pane nicely (any device/orientation) ======
-        function recomputeFillSizing() {
-            const root = document.documentElement;
-            const isDays = !daysPane.classList.contains("hidden");
-            const grid = isDays ? daysGrid : weeksGrid;
-            const cols = isDays ? 14 : 4;
-            const rows = isDays ? 27 : 14;
+        // ====== SIZING RULE: gap = dot/2 ALWAYS ======
+        // totalW = cols*dot + (cols-1)*(dot/2) = dot*( (3*cols - 1)/2 )
+        // => dot <= 2*availW / (3*cols - 1)
+        function recomputeSizing() {
+            const isWeekDetail = !weekDetailLayer.classList.contains("hidden");
+            let cols, rows, layer;
 
-            // measure pane box (more stable than grid itself)
-            const pane = isDays ? daysPane : weeksPane;
-            const rect = pane.getBoundingClientRect();
+            if (isWeekDetail) {
+                // week detail row is 7x1 but it sits with header+tooltip; dot should be based on width mostly
+                cols = 7;
+                rows = 10; // "virtual" to not oversize; keeps it comfortable in portrait
+                layer = weekDetailLayer;
+            } else {
+                const isDays = !daysLayer.classList.contains("hidden");
+                cols = isDays ? 14 : 4;
+                rows = isDays ? 27 : 14;
+                layer = isDays ? daysLayer : weeksLayer;
+            }
 
-            // leave a tiny breathing margin inside pane
+            const rect = layer.getBoundingClientRect();
             const availW = rect.width - 2;
             const availH = rect.height - 2;
 
-            // Choose a dot size first from the limiting axis with a baseline min gap.
-            const MIN_GAP = isDays ? 1 : 4;
-            const MAX_GAP = isDays ? 6 : 12;
+            const dotByW = Math.floor((2 * availW) / (3 * cols - 1));
+            const dotByH = Math.floor((2 * availH) / (3 * rows - 1));
+            let dot = Math.max(6, Math.min(dotByW, dotByH)); // clamp minimal
 
-            // Dot if we assume MIN_GAP:
-            let dotW = (availW - MIN_GAP * (cols - 1)) / cols;
-            let dotH = (availH - MIN_GAP * (rows - 1)) / rows;
-            let dot = Math.floor(Math.min(dotW, dotH));
+            // Keep dots a bit larger in week detail (feels nicer)
+            if (isWeekDetail) dot = Math.min(dot, 28);
 
-            // Clamp dot to reasonable sizes (so it doesn't become microscopic)
-            dot = Math.max(isDays ? 6 : 10, dot);
-
-            // Now compute the leftover space and distribute it as gap (so it fills)
-            // total = cols*dot + (cols-1)*gap  => gap = (availW - cols*dot)/(cols-1)
-            const gapW = (availW - cols * dot) / Math.max(1, (cols - 1));
-            const gapH = (availH - rows * dot) / Math.max(1, (rows - 1));
-            let gap = Math.floor(Math.min(gapW, gapH));
-
-            // clamp gap
-            gap = Math.max(MIN_GAP, Math.min(MAX_GAP, gap));
-
-            // Recompute dot to ensure it still fits with chosen gap
-            dotW = (availW - gap * (cols - 1)) / cols;
-            dotH = (availH - gap * (rows - 1)) / rows;
-            dot = Math.floor(Math.min(dotW, dotH));
+            const gap = dot / 2; // can be .5 px, that's okay
 
             root.style.setProperty("--dot", dot + "px");
             root.style.setProperty("--gridGap", gap + "px");
 
-            // Switch <= dot
-            const h = Math.max(14, Math.min(dot, 28));
+            // switch <= dot (height)
+            const h = Math.max(14, Math.min(dot, 26));
             const w = Math.round(h * 1.9);
             toggle.style.height = `${h}px`;
             toggle.style.width = `${w}px`;
@@ -785,24 +1022,26 @@
                 document.head.appendChild(s);
                 return s;
             })();
-            styleTag.textContent = `.switch.on .knob{ transform: translateX(${travel}px); background: linear-gradient(135deg, var(--green), var(--green2)); }`;
+            styleTag.textContent =
+                `.switch.on .knob{ transform: translateX(${travel}px); background: linear-gradient(135deg, var(--green), var(--green2)); }`;
         }
 
         // Init
         dateLongEl.textContent = longDateES(now);
         renderWeeksGrid();
         renderDaysGrid();
+        updateStats();
         setMode("weeks");
 
-        const runSizing = () => requestAnimationFrame(recomputeFillSizing);
+        const runSizing = () => requestAnimationFrame(recomputeSizing);
         runSizing();
-        setTimeout(runSizing, 250);
-        setTimeout(runSizing, 900);
+        setTimeout(runSizing, 200);
+        setTimeout(runSizing, 800);
 
         window.addEventListener("resize", runSizing, { passive: true });
         window.addEventListener("orientationchange", runSizing, { passive: true });
 
-        // keep current day fresh
+        // Refresh day change
         setInterval(() => {
             const d = new Date();
             if (!isSameDay(d, now)) location.reload();
