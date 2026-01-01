@@ -25,19 +25,20 @@
             --green: #00FF9C;
             --green2: #00C97A;
 
-            /* base dot color (dark fill) */
             --fill: rgba(255, 255, 255, .10);
-            --fill-strong: rgba(255, 255, 255, .14);
-
-            /* future stroke */
             --stroke-future: rgba(255, 255, 255, .16);
-            --stroke-past: rgba(255, 255, 255, .00);
 
             --shadow: 0 14px 40px rgba(0, 0, 0, .45);
             --r: 999px;
             --ease: cubic-bezier(.2, .9, .2, 1);
             --dur: 280ms;
             --blur: 10px;
+
+            /* computed */
+            --gridGap: 10px;
+            --cellW: 20px;
+            --cellH: 20px;
+            --dot: 20px;
         }
 
         @media (prefers-color-scheme: light) {
@@ -51,9 +52,8 @@
                 --line: rgba(11, 14, 17, .10);
 
                 --fill: rgba(11, 14, 17, .06);
-                --fill-strong: rgba(11, 14, 17, .10);
-
                 --stroke-future: rgba(11, 14, 17, .16);
+
                 --shadow: 0 12px 30px rgba(0, 0, 0, .12);
             }
         }
@@ -79,7 +79,6 @@
             overscroll-behavior: none;
         }
 
-        /* One screen, no scroll */
         .app {
             height: 100dvh;
             padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom) 14px;
@@ -93,13 +92,14 @@
         header {
             flex: 0 0 auto;
             display: grid;
-            grid-template-columns: 1fr auto;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
             padding: 6px 2px 0 2px;
             gap: 12px;
         }
 
         .dateLong {
+            grid-column: 2;
             justify-self: center;
             text-align: center;
             font-weight: 700;
@@ -113,12 +113,13 @@
         }
 
         .switchWrap {
+            grid-column: 3;
             justify-self: end;
             display: flex;
             align-items: center;
         }
 
-        /* Switch: max same size as a DAY circle (we set with JS) */
+        /* switch sized to dot via JS */
         .switch {
             appearance: none;
             border: 1px solid color-mix(in srgb, var(--faint) 90%, transparent);
@@ -133,9 +134,7 @@
             -webkit-backdrop-filter: blur(12px);
             transition: transform 140ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease);
             width: 44px;
-            /* overwritten by JS */
             height: 24px;
-            /* overwritten by JS */
         }
 
         .switch:active {
@@ -148,7 +147,6 @@
             left: 3px;
             width: 18px;
             height: 18px;
-            /* overwritten by JS */
             border-radius: var(--r);
             background: color-mix(in srgb, var(--fg) 92%, transparent);
             box-shadow: 0 6px 16px rgba(0, 0, 0, .28);
@@ -161,12 +159,7 @@
             border-color: color-mix(in srgb, var(--green) 35%, var(--faint));
         }
 
-        .switch.on .knob {
-            background: linear-gradient(135deg, var(--green), var(--green2));
-            transform: translateX(20px);
-            /* overwritten by JS */
-        }
-
+        /* translate is injected dynamically so it always matches */
         .divider {
             height: 1px;
             background: var(--line);
@@ -202,53 +195,53 @@
             filter: blur(var(--blur));
         }
 
+        /* ====== FIXED GRID LAYOUT (no overlap) ====== */
         .grid {
             width: 100%;
             height: 100%;
             display: grid;
-            place-content: stretch;
+            justify-content: center;
+            align-content: center;
+            gap: var(--gridGap);
+            grid-auto-rows: var(--cellH);
         }
 
-        /* Semanas: 4x14 */
+        /* columns width are fixed by computed var */
         .grid.weeks {
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(14, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(4, var(--cellW));
         }
 
-        /* Días: 14x27 */
         .grid.days {
-            grid-template-columns: repeat(14, 1fr);
-            grid-template-rows: repeat(27, 1fr);
-            gap: 6px;
+            grid-template-columns: repeat(14, var(--cellW));
         }
 
         .cell {
+            width: var(--cellW);
+            height: var(--cellH);
             display: grid;
             place-items: center;
             min-width: 0;
             min-height: 0;
         }
 
-        /* Perfect circles: always aspect-ratio 1, fit inside each cell */
         .dotBtn {
             appearance: none;
             border: 0;
             background: transparent;
             padding: 0;
             margin: 0;
-            width: 100%;
-            height: 100%;
-            display: grid;
-            place-items: center;
+            width: var(--dot);
+            height: var(--dot);
+            border-radius: 50%;
             cursor: pointer;
             touch-action: manipulation;
+            display: grid;
+            place-items: center;
         }
 
         .dot {
-            width: min(100%, 100%);
-            height: min(100%, 100%);
-            aspect-ratio: 1 / 1;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
             transition: transform 140ms var(--ease), filter 180ms var(--ease), opacity 180ms var(--ease), box-shadow 180ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease);
             will-change: transform, opacity, box-shadow;
@@ -260,9 +253,7 @@
             transform: scale(.96);
         }
 
-        /* State rules you requested */
-
-        /* Future = no fill + less saturation */
+        /* State rules */
         .future .dot {
             background: transparent;
             border-color: var(--stroke-future);
@@ -270,7 +261,6 @@
             opacity: .85;
         }
 
-        /* Past = filled + full saturation */
         .past .dot {
             background: var(--fill);
             border-color: transparent;
@@ -278,7 +268,6 @@
             opacity: 1;
         }
 
-        /* Current = filled but less saturation + halo */
         .current .dot {
             background: var(--fill);
             filter: saturate(.75);
@@ -288,21 +277,18 @@
                 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent);
         }
 
-        /* Note = add halo on top of whatever state */
         .note .dot {
             box-shadow:
                 0 0 0 7px color-mix(in srgb, var(--green2) 14%, transparent),
                 0 0 0 1px color-mix(in srgb, var(--green2) 38%, transparent);
         }
 
-        /* If current + note, make halo a bit richer */
         .current.note .dot {
             box-shadow:
                 0 0 0 8px color-mix(in srgb, var(--green) 14%, transparent),
                 0 0 0 2px color-mix(in srgb, var(--green2) 32%, transparent);
         }
 
-        /* Empty slots (for fixed grids) */
         .empty {
             pointer-events: none;
         }
@@ -516,7 +502,7 @@
             <div class="grabber" aria-hidden="true"></div>
             <div class="sheetHead">
                 <div class="meta">
-                    <div class="t" id="sheetTitle">Nota</div>
+                    <div class="t">Nota</div>
                     <div class="s" id="sheetSub">—</div>
                 </div>
                 <button class="xBtn" id="closeSheet" type="button" aria-label="Cerrar">✕</button>
@@ -532,7 +518,6 @@
     </div>
 
     <script>
-        // ================== Helpers fecha ==================
         const el = (id) => document.getElementById(id);
         const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -552,10 +537,9 @@
             return x;
         }
 
-        // ISO week helpers (ISO year may differ near year edges)
         function isoWeekNumber(date) {
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7; // Monday=1..Sunday=7
+            const dayNum = d.getUTCDay() || 7;
             d.setUTCDate(d.getUTCDate() + 4 - dayNum);
             const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
             const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
@@ -569,9 +553,9 @@
 
         function isoWeekStartFromWeek(year, week) {
             const simple = new Date(year, 0, 1 + (week - 1) * 7);
-            const dow = simple.getDay(); // 0..6
+            const dow = simple.getDay();
             const start = new Date(simple);
-            const diff = (dow <= 4 ? 1 - dow : 8 - dow); // move to Monday
+            const diff = (dow <= 4 ? 1 - dow : 8 - dow);
             start.setDate(simple.getDate() + diff);
             start.setHours(0, 0, 0, 0);
             return start;
@@ -579,11 +563,10 @@
 
         function longDateES(dateObj) {
             const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-            const dd = pad2(dateObj.getDate());
-            return `${dd} de ${months[dateObj.getMonth()]} de ${dateObj.getFullYear()}`;
+            return `${pad2(dateObj.getDate())} de ${months[dateObj.getMonth()]} de ${dateObj.getFullYear()}`;
         }
 
-        // ================== Storage notas ==================
+        // Notes
         const storageKey = (d) => `note:${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
         const getNote = (d) => localStorage.getItem(storageKey(d)) || "";
         const setNote = (d, text) => {
@@ -593,9 +576,10 @@
             else localStorage.setItem(k, t);
         };
 
-        // ================== Elements ==================
         const dateLongEl = el("dateLong");
         const toggle = el("toggle");
+        const knob = toggle.querySelector(".knob");
+
         const weeksPane = el("weeksPane");
         const daysPane = el("daysPane");
         const weeksGrid = el("weeksGrid");
@@ -609,56 +593,19 @@
         const counter = el("counter");
         const sheetSub = el("sheetSub");
 
-        // ================== State ==================
         const now = new Date();
         now.setSeconds(0, 0);
 
         const isoNow = isoWeekNumber(now);
-        const isoYear = isoNow.year;          // ISO year we are in
+        const isoYear = isoNow.year;
         const totalWeeks = weeksInISOYear(isoYear);
 
-        // Start/end of ISO year (Monday of week 1 to Sunday of last week)
         const isoYearStart = isoWeekStartFromWeek(isoYear, 1);
         const isoYearEnd = addDays(isoWeekStartFromWeek(isoYear, totalWeeks), 6);
 
-        let mode = "weeks"; // weeks | days
+        let mode = "weeks";
         let selectedDay = null;
 
-        // ================== UI sizing: switch <= day-dot size ==================
-        function syncSwitchToDayDot() {
-            // Wait until grid is rendered, then read a dot size from days grid
-            const anyDayDot = daysGrid.querySelector(".dot");
-            if (!anyDayDot) return;
-
-            const r = anyDayDot.getBoundingClientRect();
-            const dotSize = Math.max(18, Math.min(r.width, r.height)); // guard
-
-            // Make switch max dotSize (height), slightly wider (<= 2x height)
-            const h = Math.round(dotSize);
-            const w = Math.round(dotSize * 1.9);
-            toggle.style.height = `${h}px`;
-            toggle.style.width = `${w}px`;
-
-            const knob = toggle.querySelector(".knob");
-            const padding = Math.max(2, Math.round(h * 0.12));
-            const knobSize = h - padding * 2;
-            knob.style.top = `${padding}px`;
-            knob.style.left = `${padding}px`;
-            knob.style.width = `${knobSize}px`;
-            knob.style.height = `${knobSize}px`;
-
-            // set translate for ON state
-            const travel = w - padding * 2 - knobSize;
-            const styleTag = document.getElementById("dynToggle") || (() => {
-                const s = document.createElement("style");
-                s.id = "dynToggle";
-                document.head.appendChild(s);
-                return s;
-            })();
-            styleTag.textContent = `.switch.on .knob{ transform: translateX(${travel}px); }`;
-        }
-
-        // ================== Render helpers ==================
         function makeCell(stateClass, onClick, empty = false) {
             const cell = document.createElement("div");
             cell.className = "cell";
@@ -677,104 +624,64 @@
             return cell;
         }
 
-        // State mapping according to your rules:
-        // Future = outline + low saturation
-        // Past = filled + full saturation
-        // Current = filled low saturation + halo
-        // Note = + halo (regardless)
-        function stateForDate(dateObj, isCurrent = false) {
-            const future = dateObj > now;
-            const past = dateObj < startOfDay(now);
+        function stateForDate(d, isCurrent = false) {
+            const future = d > now;
+            const past = d < startOfDay(now);
 
-            let cls = "";
-            if (future) cls = "future";
-            else if (isCurrent) cls = "current";
-            else if (past || dateObj <= now) cls = "past";
-            else cls = "future";
-
-            const hasNote = (getNote(dateObj).trim().length > 0);
-            if (hasNote) cls += " note";
-            return cls.trim();
+            let cls = future ? "future" : (isCurrent ? "current" : "past");
+            if (getNote(d).trim().length) cls += " note";
+            return cls;
         }
 
         function stateForWeek(weekStart, isCurrent = false) {
-            // For week state, use start-of-week relative to now
             const future = weekStart > now;
             const past = addDays(weekStart, 6) < startOfDay(now);
 
-            let cls = "";
-            if (future) cls = "future";
-            else if (isCurrent) cls = "current";
-            else if (past || weekStart <= now) cls = "past";
-            else cls = "future";
+            let cls = future ? "future" : (isCurrent ? "current" : "past");
 
-            // Note halo on week if any day in week has note
             let hasAnyNote = false;
             for (let i = 0; i < 7; i++) {
                 const d = addDays(weekStart, i);
                 if (getNote(d).trim().length) { hasAnyNote = true; break; }
             }
             if (hasAnyNote) cls += " note";
-            return cls.trim();
+            return cls;
         }
 
-        // ================== Render: Weeks (4x14 fixed) ==================
         function renderWeeksGrid() {
             weeksGrid.innerHTML = "";
-
-            const rows = 14, cols = 4;
-            const slots = rows * cols; // 56
+            const slots = 56; // 4x14
 
             for (let w = 1; w <= slots; w++) {
                 if (w <= totalWeeks) {
                     const start = isoWeekStartFromWeek(isoYear, w);
-                    const isCurrent = (w === isoNow.week);
-                    const cls = stateForWeek(start, isCurrent);
-
-                    weeksGrid.appendChild(
-                        makeCell(cls, () => {
-                            // optional: tap a week opens the note sheet for Monday of that week
-                            // (still minimal: no extra screens)
-                            openDaySheet(start);
-                        })
-                    );
+                    const cls = stateForWeek(start, w === isoNow.week);
+                    weeksGrid.appendChild(makeCell(cls, () => openDaySheet(start)));
                 } else {
                     weeksGrid.appendChild(makeCell("", null, true));
                 }
             }
         }
 
-        // ================== Render: Days (14x27 fixed, ISO year range) ==================
         function renderDaysGrid() {
             daysGrid.innerHTML = "";
-
-            const rows = 27, cols = 14;
-            const slots = rows * cols; // 378
-
-            // Fill sequentially from ISO year start (Monday of week 1)
+            const slots = 378; // 14x27
             for (let i = 0; i < slots; i++) {
                 const d = addDays(isoYearStart, i);
-
                 if (d > isoYearEnd) {
                     daysGrid.appendChild(makeCell("", null, true));
                     continue;
                 }
-
-                const isCur = isSameDay(d, now);
-                const cls = stateForDate(d, isCur);
-
-                daysGrid.appendChild(
-                    makeCell(cls, () => openDaySheet(d))
-                );
+                const cls = stateForDate(d, isSameDay(d, now));
+                daysGrid.appendChild(makeCell(cls, () => openDaySheet(d)));
             }
         }
 
-        // ================== Sheet ==================
-        function openDaySheet(dateObj) {
-            selectedDay = dateObj;
-            sheetSub.textContent = longDateES(dateObj);
+        function openDaySheet(d) {
+            selectedDay = d;
+            sheetSub.textContent = longDateES(d);
 
-            noteInput.value = getNote(dateObj);
+            noteInput.value = getNote(d);
             counter.textContent = `${noteInput.value.length}/50`;
 
             overlay.classList.add("show");
@@ -793,8 +700,6 @@
         function saveCurrent() {
             if (!selectedDay) return;
             setNote(selectedDay, noteInput.value);
-
-            // refresh halos
             renderDaysGrid();
             renderWeeksGrid();
             closeSheetUI();
@@ -814,7 +719,7 @@
             if (e.key === "Escape") { e.preventDefault(); closeSheetUI(); }
         });
 
-        // swipe down close
+        // Swipe down close
         let swipeBound = false;
         function attachSwipeToClose() {
             if (swipeBound) return;
@@ -855,7 +760,6 @@
             sheet.addEventListener("touchend", onUp, { passive: true });
         }
 
-        // ================== Toggle views ==================
         function setMode(next) {
             mode = next;
             const isDays = mode === "days";
@@ -868,6 +772,8 @@
                 daysPane.classList.add("hidden");
                 weeksPane.classList.remove("hidden");
             }
+            // Recompute sizes because visible pane changes
+            requestAnimationFrame(recomputeGridSizing);
         }
 
         toggle.addEventListener("click", () => {
@@ -875,21 +781,78 @@
             setMode(mode === "weeks" ? "days" : "weeks");
         });
 
-        // ================== Init ==================
-        dateLongEl.textContent = longDateES(now);
+        // ====== CORE FIX: compute cell sizes that fit, so dots never overlap ======
+        function recomputeGridSizing() {
+            const root = document.documentElement;
 
+            // decide visible grid
+            const isDays = !daysPane.classList.contains("hidden");
+            const grid = isDays ? daysGrid : weeksGrid;
+            const cols = isDays ? 14 : 4;
+            const rows = isDays ? 27 : 14;
+
+            // gap depends on mode (match CSS)
+            const gap = isDays ? 6 : 12;
+            root.style.setProperty("--gridGap", gap + "px");
+
+            const rect = grid.getBoundingClientRect();
+
+            // available space inside the grid box
+            const availW = rect.width;
+            const availH = rect.height;
+
+            // cell size that fits the whole grid
+            const cellW = (availW - gap * (cols - 1)) / cols;
+            const cellH = (availH - gap * (rows - 1)) / rows;
+
+            // dot size must be <= min(cellW, cellH), with a tiny safety margin to avoid subpixel bleed
+            const dot = Math.floor(Math.min(cellW, cellH) - 0.5);
+            const cw = Math.floor(cellW);
+            const ch = Math.floor(cellH);
+
+            root.style.setProperty("--cellW", cw + "px");
+            root.style.setProperty("--cellH", ch + "px");
+            root.style.setProperty("--dot", dot + "px");
+
+            // switch <= dot size (height)
+            const h = Math.max(18, dot);
+            const w = Math.round(h * 1.9);
+            toggle.style.height = `${h}px`;
+            toggle.style.width = `${w}px`;
+
+            const padding = Math.max(2, Math.round(h * 0.12));
+            const knobSize = h - padding * 2;
+            knob.style.top = `${padding}px`;
+            knob.style.left = `${padding}px`;
+            knob.style.width = `${knobSize}px`;
+            knob.style.height = `${knobSize}px`;
+
+            const travel = w - padding * 2 - knobSize;
+            const styleTag = document.getElementById("dynToggle") || (() => {
+                const s = document.createElement("style");
+                s.id = "dynToggle";
+                document.head.appendChild(s);
+                return s;
+            })();
+            styleTag.textContent = `.switch.on .knob{ transform: translateX(${travel}px); }`;
+        }
+
+        // Init
+        dateLongEl.textContent = longDateES(now);
         renderWeeksGrid();
         renderDaysGrid();
         setMode("weeks");
 
-        // after first render: match switch to day-dot size
-        requestAnimationFrame(() => {
-            syncSwitchToDayDot();
-            // rerun after layout settles (fonts)
-            setTimeout(syncSwitchToDayDot, 250);
-        });
+        // sizing after layout/fonts
+        const runSizing = () => requestAnimationFrame(() => { recomputeGridSizing(); });
+        runSizing();
+        setTimeout(runSizing, 250);
+        setTimeout(runSizing, 800);
 
-        // if day changes, reload to update "current"
+        window.addEventListener("resize", runSizing, { passive: true });
+        window.addEventListener("orientationchange", runSizing, { passive: true });
+
+        // keep current day fresh
         setInterval(() => {
             const d = new Date();
             if (!isSameDay(d, now)) location.reload();
