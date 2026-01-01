@@ -33,11 +33,9 @@
             --dur: 280ms;
             --blur: 10px;
 
-            /* computed */
+            /* computed (dynamic) */
             --gridGap: 6px;
-            /* dynamic */
             --dot: 18px;
-            /* dynamic */
         }
 
         @media (prefers-color-scheme: light) {
@@ -100,7 +98,6 @@
         .dateLong {
             grid-column: 2;
             justify-self: center;
-            text-align: center;
             font-weight: 700;
             letter-spacing: .2px;
             font-size: 13px;
@@ -195,7 +192,7 @@
             filter: blur(var(--blur));
         }
 
-        /* Compact grid: cell size == dot size, gap dynamic */
+        /* GRID fills pane: dot and gap are dynamic */
         .grid {
             display: grid;
             gap: var(--gridGap);
@@ -238,10 +235,10 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            transition: transform 140ms var(--ease), filter 180ms var(--ease), opacity 180ms var(--ease), box-shadow 180ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease);
-            will-change: transform, opacity, box-shadow;
             background: transparent;
             border: 1px solid transparent;
+            transition: transform 140ms var(--ease), filter 180ms var(--ease), opacity 180ms var(--ease), box-shadow 180ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease);
+            will-change: transform, opacity, box-shadow;
         }
 
         .dotBtn:active .dot {
@@ -293,7 +290,7 @@
             border-color: transparent;
         }
 
-        /* Sheet (igual que antes) */
+        /* Sheet */
         .overlay {
             position: fixed;
             inset: 0;
@@ -449,19 +446,6 @@
             padding-right: 2px;
             font-weight: 600;
         }
-
-        @media (prefers-reduced-motion: reduce) {
-            :root {
-                --dur: 0ms;
-                --blur: 0px;
-            }
-
-            .dotBtn:active .dot,
-            .switch:active,
-            .saveBtn:active {
-                transform: none;
-            }
-        }
     </style>
 </head>
 
@@ -515,20 +499,9 @@
     <script>
         const el = (id) => document.getElementById(id);
         const pad2 = (n) => String(n).padStart(2, "0");
-
-        function startOfDay(d) {
-            const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-            x.setHours(0, 0, 0, 0);
-            return x;
-        }
-        function isSameDay(a, b) {
-            return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-        }
-        function addDays(d, n) {
-            const x = new Date(d);
-            x.setDate(x.getDate() + n);
-            return x;
-        }
+        function startOfDay(d) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setHours(0, 0, 0, 0); return x; }
+        function isSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+        function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 
         function isoWeekNumber(date) {
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -551,13 +524,11 @@
             start.setHours(0, 0, 0, 0);
             return start;
         }
-
         function longDateES(dateObj) {
             const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
             return `${pad2(dateObj.getDate())} de ${months[dateObj.getMonth()]} de ${dateObj.getFullYear()}`;
         }
 
-        // Notes
         const storageKey = (d) => `note:${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
         const getNote = (d) => localStorage.getItem(storageKey(d)) || "";
         const setNote = (d, text) => {
@@ -570,7 +541,6 @@
         const dateLongEl = el("dateLong");
         const toggle = el("toggle");
         const knob = toggle.querySelector(".knob");
-
         const weeksPane = el("weeksPane");
         const daysPane = el("daysPane");
         const weeksGrid = el("weeksGrid");
@@ -584,9 +554,7 @@
         const counter = el("counter");
         const sheetSub = el("sheetSub");
 
-        const now = new Date();
-        now.setSeconds(0, 0);
-
+        const now = new Date(); now.setSeconds(0, 0);
         const isoNow = isoWeekNumber(now);
         const isoYear = isoNow.year;
         const totalWeeks = weeksInISOYear(isoYear);
@@ -668,14 +636,11 @@
         function openDaySheet(d) {
             selectedDay = d;
             sheetSub.textContent = longDateES(d);
-
             noteInput.value = getNote(d);
             counter.textContent = `${noteInput.value.length}/50`;
-
             overlay.classList.add("show");
             sheet.classList.add("show");
             setTimeout(() => noteInput.focus({ preventScroll: true }), 80);
-
             attachSwipeToClose();
         }
 
@@ -702,21 +667,13 @@
         closeSheet.addEventListener("click", closeSheetUI);
         overlay.addEventListener("click", closeSheetUI);
 
-        noteInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") { e.preventDefault(); saveCurrent(); }
-            if (e.key === "Escape") { e.preventDefault(); closeSheetUI(); }
-        });
-
-        // Swipe down close
+        // swipe down close
         let swipeBound = false;
         function attachSwipeToClose() {
             if (swipeBound) return;
             swipeBound = true;
 
-            let startY = 0;
-            let currentY = 0;
-            let dragging = false;
-
+            let startY = 0, currentY = 0, dragging = false;
             const onDown = (e) => {
                 if (!sheet.classList.contains("show")) return;
                 dragging = true;
@@ -735,11 +692,9 @@
                 if (!dragging) return;
                 dragging = false;
                 const dy = Math.max(0, currentY - startY);
-
                 sheet.style.transform = "";
                 sheet.style.opacity = "";
                 sheet.style.filter = "";
-
                 if (dy > 90) closeSheetUI();
             };
 
@@ -760,52 +715,58 @@
                 daysPane.classList.add("hidden");
                 weeksPane.classList.remove("hidden");
             }
-            requestAnimationFrame(recomputeCompactSizing);
+            requestAnimationFrame(recomputeFillSizing);
         }
 
-        toggle.addEventListener("click", () => {
-            toggle.animate([{ transform: "scale(1)" }, { transform: "scale(.98)" }, { transform: "scale(1)" }], { duration: 170, easing: "cubic-bezier(.2,.9,.2,1)" });
-            setMode(mode === "weeks" ? "days" : "weeks");
-        });
+        toggle.addEventListener("click", () => setMode(mode === "weeks" ? "days" : "weeks"));
 
-        // ====== Compact sizing: dots as big as possible, gap as small as possible ======
-        function recomputeCompactSizing() {
+        // ====== Fill sizing: always occupy the pane nicely (any device/orientation) ======
+        function recomputeFillSizing() {
             const root = document.documentElement;
-
             const isDays = !daysPane.classList.contains("hidden");
             const grid = isDays ? daysGrid : weeksGrid;
             const cols = isDays ? 14 : 4;
             const rows = isDays ? 27 : 14;
 
-            const rect = grid.getBoundingClientRect();
-            const availW = rect.width;
-            const availH = rect.height;
+            // measure pane box (more stable than grid itself)
+            const pane = isDays ? daysPane : weeksPane;
+            const rect = pane.getBoundingClientRect();
 
-            // We want: cols*dot + (cols-1)*gap <= availW
-            //          rows*dot + (rows-1)*gap <= availH
-            // Choose minimal gap (as tight as possible), then maximize dot.
-            const MIN_GAP = isDays ? 2 : 6;   // very tight for days, comfy for weeks
-            const MAX_GAP = isDays ? 6 : 12;  // cap
+            // leave a tiny breathing margin inside pane
+            const availW = rect.width - 2;
+            const availH = rect.height - 2;
 
-            let best = { dot: 10, gap: MIN_GAP };
+            // Choose a dot size first from the limiting axis with a baseline min gap.
+            const MIN_GAP = isDays ? 1 : 4;
+            const MAX_GAP = isDays ? 6 : 12;
 
-            // Try smallest gaps first; find biggest dot that fits.
-            for (let gap = MIN_GAP; gap <= MAX_GAP; gap++) {
-                const dotW = (availW - gap * (cols - 1)) / cols;
-                const dotH = (availH - gap * (rows - 1)) / rows;
-                const dot = Math.floor(Math.min(dotW, dotH) - 0.5);
-                if (dot > best.dot) best = { dot, gap };
-            }
+            // Dot if we assume MIN_GAP:
+            let dotW = (availW - MIN_GAP * (cols - 1)) / cols;
+            let dotH = (availH - MIN_GAP * (rows - 1)) / rows;
+            let dot = Math.floor(Math.min(dotW, dotH));
 
-            // Safety clamp so it stays tappable-ish
-            const dot = Math.max(10, best.dot);
-            const gap = best.gap;
+            // Clamp dot to reasonable sizes (so it doesn't become microscopic)
+            dot = Math.max(isDays ? 6 : 10, dot);
+
+            // Now compute the leftover space and distribute it as gap (so it fills)
+            // total = cols*dot + (cols-1)*gap  => gap = (availW - cols*dot)/(cols-1)
+            const gapW = (availW - cols * dot) / Math.max(1, (cols - 1));
+            const gapH = (availH - rows * dot) / Math.max(1, (rows - 1));
+            let gap = Math.floor(Math.min(gapW, gapH));
+
+            // clamp gap
+            gap = Math.max(MIN_GAP, Math.min(MAX_GAP, gap));
+
+            // Recompute dot to ensure it still fits with chosen gap
+            dotW = (availW - gap * (cols - 1)) / cols;
+            dotH = (availH - gap * (rows - 1)) / rows;
+            dot = Math.floor(Math.min(dotW, dotH));
 
             root.style.setProperty("--dot", dot + "px");
             root.style.setProperty("--gridGap", gap + "px");
 
-            // Switch <= dot height
-            const h = Math.max(16, Math.min(dot, 28));
+            // Switch <= dot
+            const h = Math.max(14, Math.min(dot, 28));
             const w = Math.round(h * 1.9);
             toggle.style.height = `${h}px`;
             toggle.style.width = `${w}px`;
@@ -824,7 +785,7 @@
                 document.head.appendChild(s);
                 return s;
             })();
-            styleTag.textContent = `.switch.on .knob{ transform: translateX(${travel}px); }`;
+            styleTag.textContent = `.switch.on .knob{ transform: translateX(${travel}px); background: linear-gradient(135deg, var(--green), var(--green2)); }`;
         }
 
         // Init
@@ -833,14 +794,15 @@
         renderDaysGrid();
         setMode("weeks");
 
-        const runSizing = () => requestAnimationFrame(recomputeCompactSizing);
+        const runSizing = () => requestAnimationFrame(recomputeFillSizing);
         runSizing();
         setTimeout(runSizing, 250);
-        setTimeout(runSizing, 800);
+        setTimeout(runSizing, 900);
 
         window.addEventListener("resize", runSizing, { passive: true });
         window.addEventListener("orientationchange", runSizing, { passive: true });
 
+        // keep current day fresh
         setInterval(() => {
             const d = new Date();
             if (!isSameDay(d, now)) location.reload();
