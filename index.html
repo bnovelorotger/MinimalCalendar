@@ -234,8 +234,23 @@
             will-change: transform, opacity, box-shadow;
         }
 
-        .dotBtn:active .dot {
-            transform: scale(.96);
+        /* micro-pop keyframes */
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+
+            45% {
+                transform: scale(1.08);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .dot.pop {
+            animation: pop 180ms cubic-bezier(.2, .9, .2, 1);
         }
 
         /* States */
@@ -347,7 +362,73 @@
             touch-action: manipulation;
         }
 
-        /* Sheet */
+        /* In-panel note menu (matches your image) */
+        .noteMenu {
+            width: 100%;
+            max-width: 520px;
+            border-radius: 18px;
+            border: 1px solid color-mix(in srgb, var(--faint) 70%, transparent);
+            background: color-mix(in srgb, var(--panel) 86%, transparent);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, .35);
+            padding: 12px 12px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .noteMenu.show {
+            display: flex;
+        }
+
+        .noteMenu .left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .noteMenu .date {
+            font-weight: 900;
+            font-size: 13px;
+            color: color-mix(in srgb, var(--fg) 88%, transparent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 58vw;
+        }
+
+        .noteMenu .text {
+            font-weight: 600;
+            font-size: 12px;
+            color: color-mix(in srgb, var(--muted) 88%, transparent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 58vw;
+        }
+
+        .noteMenu .btn {
+            appearance: none;
+            border: 1px solid color-mix(in srgb, var(--faint) 75%, transparent);
+            background: transparent;
+            color: color-mix(in srgb, var(--fg) 88%, transparent);
+            border-radius: 999px;
+            padding: 9px 12px;
+            font-weight: 900;
+            font-size: 12px;
+            cursor: pointer;
+            touch-action: manipulation;
+            white-space: nowrap;
+        }
+
+        .noteMenu .btn:active {
+            transform: scale(.98);
+        }
+
+        /* Sheet (editor) */
         .overlay {
             position: fixed;
             inset: 0;
@@ -493,20 +574,6 @@
             padding-right: 2px;
             font-weight: 600;
         }
-
-        @media (prefers-reduced-motion: reduce) {
-            :root {
-                --dur: 0ms;
-                --blur: 0px;
-            }
-
-            .dotBtn:active .dot,
-            .switch:active,
-            .saveBtn:active,
-            .backBtn:active {
-                transform: none;
-            }
-        }
     </style>
 </head>
 
@@ -547,6 +614,15 @@
                             <div>D</div>
                         </div>
                         <div class="weekDaysRow" id="weekDaysRow"></div>
+
+                        <!-- Note menu like the image -->
+                        <div class="noteMenu" id="noteMenu">
+                            <div class="left">
+                                <div class="date" id="menuDate">—</div>
+                                <div class="text" id="menuText">—</div>
+                            </div>
+                            <button class="btn" id="menuBtn" type="button">Añadir nota</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -559,7 +635,7 @@
         </div>
     </div>
 
-    <!-- Note sheet (single, used everywhere) -->
+    <!-- Note editor sheet -->
     <div class="overlay" id="overlay"></div>
     <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Nota del día">
         <div class="sheetCard" id="sheetCard">
@@ -641,6 +717,11 @@
         const weekDaysRow = el("weekDaysRow");
         const weekBack = el("weekBack");
 
+        const noteMenu = el("noteMenu");
+        const menuDate = el("menuDate");
+        const menuText = el("menuText");
+        const menuBtn = el("menuBtn");
+
         const daysLeftEl = el("daysLeft");
         const progressEl = el("progress");
 
@@ -666,14 +747,14 @@
         let selectedDay = null;
         let weekSelectedStart = null;
 
-        // click-to-close behaviour
-        let lastDayTapKey = null; // "YYYY-MM-DD"
+        // note menu state (in-week view)
+        let menuOpenForKey = null;
 
         function dayKey(d) {
             return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
         }
 
-        // State classes
+        // States
         function stateForDate(d, isCurrent = false) {
             const future = d > now;
             const past = d < startOfDay(now);
@@ -681,7 +762,6 @@
             if (getNote(d).trim().length) cls += " note";
             return cls;
         }
-
         function stateForWeek(weekStart, isCurrent = false) {
             const future = weekStart > now;
             const past = addDays(weekStart, 6) < startOfDay(now);
@@ -696,16 +776,37 @@
             return cls;
         }
 
+        // Micro-pop helper
+        function popFromEvent(e) {
+            const btn = e.currentTarget;
+            const dot = btn.querySelector(".dot");
+            if (!dot) return;
+            dot.classList.remove("pop");
+            // force reflow so it restarts reliably
+            void dot.offsetWidth;
+            dot.classList.add("pop");
+            setTimeout(() => dot.classList.remove("pop"), 220);
+        }
+
         function makeCell(stateClass, onClick, empty = false) {
             const cell = document.createElement("div");
             cell.className = "cell";
+
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "dotBtn " + (empty ? "empty" : stateClass);
+
             const dot = document.createElement("div");
             dot.className = "dot";
             btn.appendChild(dot);
-            if (onClick && !empty) btn.addEventListener("click", onClick);
+
+            if (onClick && !empty) {
+                btn.addEventListener("click", (e) => {
+                    popFromEvent(e);      // micro-pop
+                    onClick(e);
+                });
+            }
+
             cell.appendChild(btn);
             return cell;
         }
@@ -734,12 +835,11 @@
                     continue;
                 }
                 const cls = stateForDate(d, isSameDay(d, now));
-                // uses the SAME sheet
-                daysGrid.appendChild(makeCell(cls, () => onDayTap(d)));
+                // In "days view" we open the editor sheet directly
+                daysGrid.appendChild(makeCell(cls, () => openEditorSheet(d)));
             }
         }
 
-        // Stats
         function updateStats() {
             const totalDays = Math.round((startOfDay(isoYearEnd) - startOfDay(isoYearStart)) / 86400000) + 1;
             const elapsedDays = Math.max(0, Math.round((startOfDay(now) - startOfDay(isoYearStart)) / 86400000) + 1);
@@ -749,18 +849,21 @@
             progressEl.textContent = `${pct.toFixed(0)}%`;
         }
 
-        // Week detail view
+        // Week detail
         function openWeekDetail(weekStart) {
             weekSelectedStart = weekStart;
+            // close editor if open
+            closeEditorSheet(true);
 
-            // Ensure sheet is closed when entering week detail
-            closeSheetUI(true);
+            // reset menu
+            noteMenu.classList.remove("show");
+            menuOpenForKey = null;
 
             weekDaysRow.innerHTML = "";
             for (let i = 0; i < 7; i++) {
                 const d = addDays(weekStart, i);
                 const cls = stateForDate(d, isSameDay(d, now));
-                weekDaysRow.appendChild(makeCell(cls, () => onDayTap(d)));
+                weekDaysRow.appendChild(makeCell(cls, () => onWeekDayTap(d)));
             }
 
             weeksLayer.classList.add("hidden");
@@ -773,7 +876,10 @@
             weekDetailLayer.classList.add("hidden");
             weekSelectedStart = null;
 
-            // Show main view for current mode
+            // close note menu
+            noteMenu.classList.remove("show");
+            menuOpenForKey = null;
+
             if (mode === "days") {
                 daysLayer.classList.remove("hidden");
                 weeksLayer.classList.add("hidden");
@@ -785,32 +891,71 @@
         }
 
         weekBack.addEventListener("click", () => {
-            closeSheetUI(true);
+            closeEditorSheet(true);
             closeWeekDetail();
         });
 
-        // ====== Day tap behaviour (toggle sheet on same day) ======
-        function onDayTap(d) {
+        // In-week: tap day toggles the in-panel menu (like your image)
+        let lastTappedDateObj = null;
+
+        function onWeekDayTap(d) {
             const k = dayKey(d);
 
-            // If sheet is open and tapping same day => close
-            if (isSheetOpen() && lastDayTapKey === k) {
-                closeSheetUI(true);
-                lastDayTapKey = null;
+            // if editor is open, first close editor (don't leave both open)
+            if (isEditorOpen()) closeEditorSheet(true);
+
+            // If same day tapped again and menu open => close
+            if (noteMenu.classList.contains("show") && menuOpenForKey === k) {
+                noteMenu.classList.remove("show");
+                menuOpenForKey = null;
+                lastTappedDateObj = null;
                 return;
             }
 
-            // Otherwise open for that day
-            lastDayTapKey = k;
-            openDaySheet(d);
+            // Otherwise open menu for that day
+            lastTappedDateObj = d;
+            menuOpenForKey = k;
+
+            const note = getNote(d).trim();
+            menuDate.textContent = longDateES(d);
+            menuText.textContent = note.length ? note : "Sin nota";
+            menuBtn.textContent = note.length ? "Editar nota" : "Añadir nota";
+
+            noteMenu.classList.add("show");
         }
 
-        function isSheetOpen() {
-            return sheet.classList.contains("show");
-        }
+        // Clicking outside the menu (within week view area) closes the menu
+        weekDetailLayer.addEventListener("click", (e) => {
+            // if click is inside menu or button or on a dot, do nothing
+            const insideMenu = e.target.closest("#noteMenu");
+            const insideDot = e.target.closest(".dotBtn");
+            const insideBack = e.target.closest("#weekBack");
+            if (insideMenu || insideDot || insideBack) return;
 
-        // Sheet open/close (single used everywhere)
-        function openDaySheet(d) {
+            if (noteMenu.classList.contains("show")) {
+                noteMenu.classList.remove("show");
+                menuOpenForKey = null;
+                lastTappedDateObj = null;
+            }
+        });
+
+        // Menu button opens editor sheet
+        menuBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (!lastTappedDateObj) return;
+            openEditorSheet(lastTappedDateObj);
+        });
+
+        // Editor sheet (used in days view and from week menu button)
+        function isEditorOpen() { return sheet.classList.contains("show"); }
+
+        function openEditorSheet(d) {
+            // If editor is open and tapping same day again => close (satisfying toggle)
+            if (isEditorOpen() && selectedDay && dayKey(selectedDay) === dayKey(d)) {
+                closeEditorSheet(true);
+                return;
+            }
+
             selectedDay = d;
             sheetSub.textContent = longDateES(d);
             noteInput.value = getNote(d);
@@ -821,25 +966,31 @@
             setTimeout(() => noteInput.focus({ preventScroll: true }), 60);
         }
 
-        function closeSheetUI(silent = false) {
+        function closeEditorSheet(silent = false) {
             overlay.classList.remove("show");
             sheet.classList.remove("show");
             selectedDay = null;
-            if (!silent) lastDayTapKey = null;
+            if (!silent) lastTappedDateObj = null;
         }
 
         function saveCurrent() {
             if (!selectedDay) return;
             setNote(selectedDay, noteInput.value);
 
-            // refresh visuals
+            // refresh visuals everywhere
             renderDaysGrid();
             renderWeeksGrid();
             if (weekSelectedStart && !weekDetailLayer.classList.contains("hidden")) {
-                openWeekDetail(weekSelectedStart); // rerender week row while staying there
+                openWeekDetail(weekSelectedStart); // rerender
+                // reopen menu for same day if it was open
+                if (menuOpenForKey) {
+                    // find d from key
+                    const [Y, M, D] = menuOpenForKey.split("-").map(Number);
+                    onWeekDayTap(new Date(Y, M - 1, D));
+                }
             }
             updateStats();
-            closeSheetUI(true);
+            closeEditorSheet(true);
         }
 
         noteInput.addEventListener("input", () => {
@@ -848,32 +999,30 @@
         });
 
         saveNote.addEventListener("click", saveCurrent);
-        closeSheet.addEventListener("click", () => closeSheetUI(true));
+        closeSheet.addEventListener("click", () => closeEditorSheet(true));
 
-        // Overlay click closes sheet (your requirement)
-        overlay.addEventListener("click", () => {
-            closeSheetUI(true);
-            lastDayTapKey = null;
-        });
-
-        // Prevent clicks inside sheet from closing (safety)
+        // overlay closes editor
+        overlay.addEventListener("click", () => closeEditorSheet(true));
+        // prevent clicks inside sheet from closing
         sheetCard.addEventListener("click", (e) => e.stopPropagation());
         sheet.addEventListener("click", (e) => e.stopPropagation());
 
         noteInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") { e.preventDefault(); saveCurrent(); }
-            if (e.key === "Escape") { e.preventDefault(); closeSheetUI(true); lastDayTapKey = null; }
+            if (e.key === "Escape") { e.preventDefault(); closeEditorSheet(true); }
         });
 
-        // Switch behaviour: ALWAYS return to main screens
+        // Switch: ALWAYS return to main screens
         function setMode(next) {
             mode = next;
             const isDays = mode === "days";
             toggle.classList.toggle("on", isDays);
 
-            // Close any secondary layers & sheet
-            closeSheetUI(true);
-            lastDayTapKey = null;
+            // close secondary UI
+            closeEditorSheet(true);
+            noteMenu.classList.remove("show");
+            menuOpenForKey = null;
+            lastTappedDateObj = null;
 
             if (!weekDetailLayer.classList.contains("hidden")) {
                 weekDetailLayer.classList.add("hidden");
@@ -899,7 +1048,7 @@
 
             if (!weekDetailLayer.classList.contains("hidden")) {
                 cols = 7;
-                rows = 14; // comfortable sizing in week view
+                rows = 16; // leaves room for menu
                 layer = weekDetailLayer;
             } else {
                 const isDays = !daysLayer.classList.contains("hidden");
@@ -916,11 +1065,9 @@
             const dotByH = Math.floor((2 * availH) / (3 * rows - 1));
             let dot = Math.max(6, Math.min(dotByW, dotByH));
 
-            // keep week day row nicer
             if (!weekDetailLayer.classList.contains("hidden")) dot = Math.min(dot, 26);
 
             const gap = dot / 2;
-
             root.style.setProperty("--dot", dot + "px");
             root.style.setProperty("--gridGap", gap + "px");
 
@@ -963,7 +1110,6 @@
         window.addEventListener("resize", runSizing, { passive: true });
         window.addEventListener("orientationchange", runSizing, { passive: true });
 
-        // Refresh day change
         setInterval(() => {
             const d = new Date();
             if (!isSameDay(d, now)) location.reload();
