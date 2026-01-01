@@ -7,7 +7,6 @@
     <title>ISO · Weeks / Days</title>
     <meta name="theme-color" content="#0b0e11" />
 
-    <!-- Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -35,10 +34,10 @@
             --blur: 10px;
 
             /* computed */
-            --gridGap: 10px;
-            --cellW: 20px;
-            --cellH: 20px;
-            --dot: 20px;
+            --gridGap: 6px;
+            /* dynamic */
+            --dot: 18px;
+            /* dynamic */
         }
 
         @media (prefers-color-scheme: light) {
@@ -119,7 +118,6 @@
             align-items: center;
         }
 
-        /* switch sized to dot via JS */
         .switch {
             appearance: none;
             border: 1px solid color-mix(in srgb, var(--faint) 90%, transparent);
@@ -159,7 +157,6 @@
             border-color: color-mix(in srgb, var(--green) 35%, var(--faint));
         }
 
-        /* translate is injected dynamically so it always matches */
         .divider {
             height: 1px;
             background: var(--line);
@@ -186,6 +183,9 @@
             inset: 12px;
             transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), filter var(--dur) var(--ease);
             will-change: transform, opacity, filter;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .pane.hidden {
@@ -195,33 +195,28 @@
             filter: blur(var(--blur));
         }
 
-        /* ====== FIXED GRID LAYOUT (no overlap) ====== */
+        /* Compact grid: cell size == dot size, gap dynamic */
         .grid {
-            width: 100%;
-            height: 100%;
             display: grid;
+            gap: var(--gridGap);
             justify-content: center;
             align-content: center;
-            gap: var(--gridGap);
-            grid-auto-rows: var(--cellH);
+            grid-auto-rows: var(--dot);
         }
 
-        /* columns width are fixed by computed var */
         .grid.weeks {
-            grid-template-columns: repeat(4, var(--cellW));
+            grid-template-columns: repeat(4, var(--dot));
         }
 
         .grid.days {
-            grid-template-columns: repeat(14, var(--cellW));
+            grid-template-columns: repeat(14, var(--dot));
         }
 
         .cell {
-            width: var(--cellW);
-            height: var(--cellH);
+            width: var(--dot);
+            height: var(--dot);
             display: grid;
             place-items: center;
-            min-width: 0;
-            min-height: 0;
         }
 
         .dotBtn {
@@ -253,7 +248,7 @@
             transform: scale(.96);
         }
 
-        /* State rules */
+        /* States */
         .future .dot {
             background: transparent;
             border-color: var(--stroke-future);
@@ -298,7 +293,7 @@
             border-color: transparent;
         }
 
-        /* Sheet */
+        /* Sheet (igual que antes) */
         .overlay {
             position: fixed;
             inset: 0;
@@ -486,11 +481,11 @@
 
         <div class="card">
             <div class="pane" id="weeksPane">
-                <div class="grid weeks" id="weeksGrid" aria-label="Semanas ISO 4x14"></div>
+                <div class="grid weeks" id="weeksGrid"></div>
             </div>
 
             <div class="pane hidden" id="daysPane">
-                <div class="grid days" id="daysGrid" aria-label="Días del año ISO 14x27"></div>
+                <div class="grid days" id="daysGrid"></div>
             </div>
         </div>
     </div>
@@ -526,11 +521,9 @@
             x.setHours(0, 0, 0, 0);
             return x;
         }
-
         function isSameDay(a, b) {
             return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
         }
-
         function addDays(d, n) {
             const x = new Date(d);
             x.setDate(x.getDate() + n);
@@ -545,12 +538,10 @@
             const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
             return { week: weekNo, year: d.getUTCFullYear() };
         }
-
         function weeksInISOYear(year) {
             const { week } = isoWeekNumber(new Date(year, 11, 28));
             return week;
         }
-
         function isoWeekStartFromWeek(year, week) {
             const simple = new Date(year, 0, 1 + (week - 1) * 7);
             const dow = simple.getDay();
@@ -627,7 +618,6 @@
         function stateForDate(d, isCurrent = false) {
             const future = d > now;
             const past = d < startOfDay(now);
-
             let cls = future ? "future" : (isCurrent ? "current" : "past");
             if (getNote(d).trim().length) cls += " note";
             return cls;
@@ -636,7 +626,6 @@
         function stateForWeek(weekStart, isCurrent = false) {
             const future = weekStart > now;
             const past = addDays(weekStart, 6) < startOfDay(now);
-
             let cls = future ? "future" : (isCurrent ? "current" : "past");
 
             let hasAnyNote = false;
@@ -651,7 +640,6 @@
         function renderWeeksGrid() {
             weeksGrid.innerHTML = "";
             const slots = 56; // 4x14
-
             for (let w = 1; w <= slots; w++) {
                 if (w <= totalWeeks) {
                     const start = isoWeekStartFromWeek(isoYear, w);
@@ -772,8 +760,7 @@
                 daysPane.classList.add("hidden");
                 weeksPane.classList.remove("hidden");
             }
-            // Recompute sizes because visible pane changes
-            requestAnimationFrame(recomputeGridSizing);
+            requestAnimationFrame(recomputeCompactSizing);
         }
 
         toggle.addEventListener("click", () => {
@@ -781,41 +768,44 @@
             setMode(mode === "weeks" ? "days" : "weeks");
         });
 
-        // ====== CORE FIX: compute cell sizes that fit, so dots never overlap ======
-        function recomputeGridSizing() {
+        // ====== Compact sizing: dots as big as possible, gap as small as possible ======
+        function recomputeCompactSizing() {
             const root = document.documentElement;
 
-            // decide visible grid
             const isDays = !daysPane.classList.contains("hidden");
             const grid = isDays ? daysGrid : weeksGrid;
             const cols = isDays ? 14 : 4;
             const rows = isDays ? 27 : 14;
 
-            // gap depends on mode (match CSS)
-            const gap = isDays ? 6 : 12;
-            root.style.setProperty("--gridGap", gap + "px");
-
             const rect = grid.getBoundingClientRect();
-
-            // available space inside the grid box
             const availW = rect.width;
             const availH = rect.height;
 
-            // cell size that fits the whole grid
-            const cellW = (availW - gap * (cols - 1)) / cols;
-            const cellH = (availH - gap * (rows - 1)) / rows;
+            // We want: cols*dot + (cols-1)*gap <= availW
+            //          rows*dot + (rows-1)*gap <= availH
+            // Choose minimal gap (as tight as possible), then maximize dot.
+            const MIN_GAP = isDays ? 2 : 6;   // very tight for days, comfy for weeks
+            const MAX_GAP = isDays ? 6 : 12;  // cap
 
-            // dot size must be <= min(cellW, cellH), with a tiny safety margin to avoid subpixel bleed
-            const dot = Math.floor(Math.min(cellW, cellH) - 0.5);
-            const cw = Math.floor(cellW);
-            const ch = Math.floor(cellH);
+            let best = { dot: 10, gap: MIN_GAP };
 
-            root.style.setProperty("--cellW", cw + "px");
-            root.style.setProperty("--cellH", ch + "px");
+            // Try smallest gaps first; find biggest dot that fits.
+            for (let gap = MIN_GAP; gap <= MAX_GAP; gap++) {
+                const dotW = (availW - gap * (cols - 1)) / cols;
+                const dotH = (availH - gap * (rows - 1)) / rows;
+                const dot = Math.floor(Math.min(dotW, dotH) - 0.5);
+                if (dot > best.dot) best = { dot, gap };
+            }
+
+            // Safety clamp so it stays tappable-ish
+            const dot = Math.max(10, best.dot);
+            const gap = best.gap;
+
             root.style.setProperty("--dot", dot + "px");
+            root.style.setProperty("--gridGap", gap + "px");
 
-            // switch <= dot size (height)
-            const h = Math.max(18, dot);
+            // Switch <= dot height
+            const h = Math.max(16, Math.min(dot, 28));
             const w = Math.round(h * 1.9);
             toggle.style.height = `${h}px`;
             toggle.style.width = `${w}px`;
@@ -843,8 +833,7 @@
         renderDaysGrid();
         setMode("weeks");
 
-        // sizing after layout/fonts
-        const runSizing = () => requestAnimationFrame(() => { recomputeGridSizing(); });
+        const runSizing = () => requestAnimationFrame(recomputeCompactSizing);
         runSizing();
         setTimeout(runSizing, 250);
         setTimeout(runSizing, 800);
@@ -852,7 +841,6 @@
         window.addEventListener("resize", runSizing, { passive: true });
         window.addEventListener("orientationchange", runSizing, { passive: true });
 
-        // keep current day fresh
         setInterval(() => {
             const d = new Date();
             if (!isSameDay(d, now)) location.reload();
