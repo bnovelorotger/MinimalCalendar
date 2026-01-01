@@ -16,7 +16,7 @@
             --bg: #0B0E11;
             --panel: #10151C;
             --fg: #FFFFFF;
-            --muted: rgba(255, 255, 255, .70);
+            --muted: rgba(255, 255, 255, 0.6);
             --faint: rgba(255, 255, 255, .14);
             --line: rgba(255, 255, 255, .10);
 
@@ -273,19 +273,19 @@
             filter: saturate(.75);
             opacity: 1;
             box-shadow:
-                0 0 0 7px color-mix(in srgb, var(--green) 12%, transparent),
+                0 0 0 5px color-mix(in srgb, var(--green) 12%, transparent),
                 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent);
         }
 
         .note .dot {
             box-shadow:
-                0 0 0 7px color-mix(in srgb, var(--green2) 14%, transparent),
+                0 0 0 5px color-mix(in srgb, var(--green2) 14%, transparent),
                 0 0 0 1px color-mix(in srgb, var(--green2) 38%, transparent);
         }
 
         .current.note .dot {
             box-shadow:
-                0 0 0 8px color-mix(in srgb, var(--green) 14%, transparent),
+                0 0 0 5px color-mix(in srgb, var(--green) 14%, transparent),
                 0 0 0 2px color-mix(in srgb, var(--green2) 32%, transparent);
         }
 
@@ -312,7 +312,7 @@
         }
 
         .stats .sep {
-            opacity: .35;
+            opacity: .45;
         }
 
         /* Week detail */
